@@ -296,14 +296,14 @@
  * +printer		":hardcopy" command
  * +postscript		Printing uses PostScript file output.
  */
-#if defined(FEAT_NORMAL) && (defined(MSWIN) || defined(FEAT_EVAL)) \
-	&& !defined(AMIGA)
-# define FEAT_PRINTER
-#endif
-#if defined(FEAT_PRINTER) && ((defined(MSWIN) && defined(MSWINPS)) \
-	|| (!defined(MSWIN) && defined(FEAT_EVAL)))
-# define FEAT_POSTSCRIPT
-#endif
+// #if defined(FEAT_NORMAL) && (defined(MSWIN) || defined(FEAT_EVAL)) \
+// 	&& !defined(AMIGA)
+//  # define FEAT_PRINTER
+// #endif
+// #if defined(FEAT_PRINTER) && ((defined(MSWIN) && defined(MSWINPS)) \
+// 	|| (!defined(MSWIN) && defined(FEAT_EVAL)))
+//  # define FEAT_POSTSCRIPT
+// #endif
 
 /*
  * +diff		Displaying diffs in a nice way.
@@ -361,16 +361,16 @@
 /*
  * +spell		spell checking
  */
-#if (defined(FEAT_NORMAL) || defined(PROTO))
-# define FEAT_SPELL
-#endif
+// #if (defined(FEAT_NORMAL) || defined(PROTO))
+// # define FEAT_SPELL
+// #endif
 
 /*
  * +cryptv		Encryption (originally by Mohsin Ahmed <mosh@sasi.com>).
  */
-#if defined(FEAT_NORMAL) && !defined(FEAT_CRYPT) || defined(PROTO)
-# define FEAT_CRYPT
-#endif
+// #if defined(FEAT_NORMAL) && !defined(FEAT_CRYPT) || defined(PROTO)
+// # define FEAT_CRYPT
+// #endif
 
 /*
  * libsodium - add advanced cryptography support
@@ -392,9 +392,9 @@
  * +gettext		Message translations (requires +multi_lang)
  *			(only when "lang" archive unpacked)
  */
-#ifdef FEAT_NORMAL
-# define FEAT_MULTI_LANG
-#endif
+// #ifdef FEAT_NORMAL
+// # define FEAT_MULTI_LANG
+// #endif
 #if defined(HAVE_GETTEXT) && defined(FEAT_MULTI_LANG) \
 	&& (defined(HAVE_LOCALE_H) || defined(X_LOCALE))
 # define FEAT_GETTEXT
@@ -461,12 +461,12 @@
 /*
  * +menu		":menu" command
  */
-#ifdef FEAT_NORMAL
-# define FEAT_MENU
-# ifdef FEAT_GUI_MSWIN
-#  define FEAT_TEAROFF
-# endif
-#endif
+// #ifdef FEAT_NORMAL
+// # define FEAT_MENU
+// # ifdef FEAT_GUI_MSWIN
+// #  define FEAT_TEAROFF
+// # endif
+// #endif
 
 /*
  * popup menu in a terminal

@@ -211,6 +211,9 @@ OBJDIR = $(OBJDIR)V
 !if "$(DEBUG)" == "yes"
 OBJDIR = $(OBJDIR)d
 !endif
+!if "$(LTCG)" == "yes"
+OBJDIR = $(OBJDIR)GL
+!endif
 
 !ifdef PROCESSOR_ARCHITECTURE
 # We're on Windows NT or using VC 6+
@@ -246,6 +249,9 @@ CPU = i386
 ASSEMBLY_ARCHITECTURE=$(CPU)
 OBJDIR = $(OBJDIR)$(CPU)
 
+# Add MSVC version to OBJDIR
+OBJDIR = $(OBJDIR)-$(MSVCVER)
+
 # Build a retail version by default
 
 !if "$(DEBUG)" != "yes"
@@ -255,7 +261,11 @@ NODEBUG = 1
 MAKEFLAGS_GVIMEXT = DEBUG=yes
 !endif
 
+!if "$(CC)" == "clang-cl"
+LINK = lld-link
+!else
 LINK = link
+!endif
 
 # Check VC version.
 !if [echo MSVCVER=_MSC_VER> msvcver.c && $(CC) /EP msvcver.c > msvcver.~ 2> nul]
@@ -308,7 +318,7 @@ WINVER = 0x0601
 !endif
 
 # Use multiprocess build
-USE_MP = yes
+USE_MP = no
 
 !if "$(FEATURES)"==""
 FEATURES = HUGE
@@ -482,6 +492,7 @@ NETBEANS_LIB	= Ws2_32.lib
 # ole32.lib and uuid.lib are needed for FEAT_SHORTCUT
 CON_LIB = oldnames.lib kernel32.lib advapi32.lib shell32.lib gdi32.lib \
 	  comdlg32.lib ole32.lib netapi32.lib uuid.lib user32.lib \
+	  shlwapi.lib \
 	  /machine:$(CPU)
 !if "$(DELAYLOAD)" == "yes"
 CON_LIB = $(CON_LIB) /DELAYLOAD:comdlg32.dll /DELAYLOAD:ole32.dll DelayImp.lib
@@ -497,6 +508,9 @@ CFLAGS = -c /W3 /GF /nologo -I. -Iproto -DHAVE_PATHDEF -DWIN32 -DHAVE_STDINT_H \
 		$(NBDEBUG_DEFS) $(XPM_DEFS) $(SOD_DEFS) $(SOD_INC) \
 		$(DEFINES) -DWINVER=$(WINVER) -D_WIN32_WINNT=$(WINVER) \
 		/source-charset:utf-8
+!if "$(CC)" == "clang-cl"
+CFLAGS = $(CFLAGS) /clang:-fuse-ld=lld /clang:-flto=thin /clang:-O3 /clang:-march=native /clang:-Wno-deprecated-declarations /clang:-mno-retpoline /clang:-fomit-frame-pointer
+!endif
 
 #>>>>> end of choices
 ###########################################################################
@@ -556,7 +570,7 @@ VIMDLLBASE = $(VIMDLLBASE)d
 !endif
 
 LIBC =
-DEBUGINFO = /Zi
+DEBUGINFO = /Zi /d2Zi+
 
 # Use multiprocess build.
 !if "$(USE_MP)" == "yes"
@@ -580,14 +594,16 @@ VIM = vim
 ! if "$(OPTIMIZE)" == "SPACE"
 OPTFLAG = /O1
 ! elseif "$(OPTIMIZE)" == "SPEED"
-OPTFLAG = /O2
+OPTFLAG = /O2 /GS- /Gw
 ! else # MAXSPEED
 OPTFLAG = /Ox
 ! endif
 
 # Use link time code generation if not worried about size
 ! if "$(OPTIMIZE)" != "SPACE"
+! if "$(CLANG)" != "clang-cl"
 OPTFLAG = $(OPTFLAG) /GL
+! endif
 ! endif
 
 CFLAGS = $(CFLAGS) $(OPTFLAG) -DNDEBUG $(CPUARG)
@@ -839,6 +855,11 @@ MAKEFLAGS_TOOLS = $(MAKEFLAGS_TOOLS) SUBSYSTEM_VER=$(SUBSYSTEM_VER)
 CFLAGS = $(CFLAGS) $(DIRECTX_DEFS)
 GUI_INCL = $(GUI_INCL) $(DIRECTX_INCL)
 GUI_OBJ = $(GUI_OBJ) $(DIRECTX_OBJ)
+!endif
+
+# Enable customizing exe name
+!if "$(EXENAME)" != ""
+VIM = $(EXENAME)
 !endif
 
 # iconv.dll library (dynamically loaded)
@@ -1180,7 +1201,7 @@ LINKARGS2 = $(CON_LIB) $(GUI_LIB) $(LIBC) $(OLE_LIB) \
 !ifdef NODEBUG
 # Add /opt:ref to remove unreferenced functions and data even when /DEBUG is
 # added.
-LINKARGS1 = $(LINKARGS1) /opt:ref
+LINKARGS1 = $(LINKARGS1) /opt:ref /opt:icf
 !else
 LINKARGS1 = $(LINKARGS1) /opt:noref /opt:noicf
 !endif
@@ -1288,7 +1309,7 @@ uninstall.exe: uninstall.c dosinst.h version.h
 		-link -subsystem:$(SUBSYSTEM_TOOLS)
 
 vimrun.exe: vimrun.c
-	$(CC) /nologo -DNDEBUG vimrun.c -link -subsystem:$(SUBSYSTEM_TOOLS)
+	$(CC) $(CFLAGS) /nologo -DNDEBUG vimrun.c -link -subsystem:$(SUBSYSTEM_TOOLS)
 
 xxd/xxd.exe: xxd/xxd.c
 	cd xxd
