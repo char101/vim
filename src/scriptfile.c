@@ -875,6 +875,17 @@ theend:
     return retval;
 }
 
+    static void
+source_plugin_settings(char_u *fname)
+{
+    char_u path[256];
+    
+    STRCPY(path, fname);
+    STRCAT(path, ".vim");
+    if (vim_fexists(path))
+	do_source(path, FALSE, DOSO_NONE, NULL);
+}
+
 // used for "cookie" of add_pack_plugin()
 static int APP_ADD_DIR;
 static int APP_LOAD;
@@ -883,6 +894,10 @@ static int APP_BOTH;
     static void
 add_pack_plugin(char_u *fname, void *cookie)
 {
+    // skip loading pack if name ends with '_'
+    if (fname[strlen(fname) - 1] == '_')
+	return;
+
     if (cookie != &APP_LOAD)
     {
 	char_u	*buf = alloc(MAXPATHL);
@@ -902,10 +917,12 @@ add_pack_plugin(char_u *fname, void *cookie)
 	    }
 	}
 	vim_free(buf);
-	if (!found)
+	if (!found) {
 	    // directory is not yet in 'runtimepath', add it
 	    if (add_pack_dir_to_rtp(fname) == FAIL)
 		return;
+	    source_plugin_settings(fname);
+	}
     }
 
     if (cookie != &APP_ADD_DIR)
