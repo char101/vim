@@ -620,6 +620,7 @@ static UINT	surrogate_pending_ch = 0; // 0: no surrogate pending,
 // balloon-eval WM_NOTIFY_HANDLER
 static void Handle_WM_Notify(HWND hwnd, LPNMHDR pnmh);
 static void track_user_activity(UINT uMsg);
+static POINT s_mousemove;
 #endif
 
 /*
@@ -8998,6 +8999,15 @@ Handle_WM_Notify(HWND hwnd UNUSED, LPNMHDR pnmh)
     static void
 track_user_activity(UINT uMsg)
 {
+    if (uMsg == WM_MOUSEMOVE) {
+	POINT p;
+	GetCursorPos(&p);
+	if (p.x == s_mousemove.x && p.y == s_mousemove.y)
+	    return;
+	s_mousemove.x = p.x;
+	s_mousemove.y = p.y;
+    }
+
     if ((uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST)
 	    || (uMsg >= WM_KEYFIRST && uMsg <= WM_KEYLAST))
 	last_user_activity = GetTickCount();
