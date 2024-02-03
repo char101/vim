@@ -3713,6 +3713,8 @@ logfont2name(LOGFONTW lf)
 	    STRCAT(p, ":i");
 	if (lf.lfWeight == FW_BOLD)
 	    STRCAT(p, ":b");
+	else if (lf.lfWeight >= FW_MEDIUM)
+	    STRCAT(p, ":m");
 	if (lf.lfUnderline)
 	    STRCAT(p, ":u");
 	if (lf.lfStrikeOut)
@@ -3759,6 +3761,25 @@ update_im_font(void)
 }
 #endif
 
+void find_bold_font(LOGFONTW *lf)
+{
+    // _ in font name have been replaced with ' ' here
+    if (lf->lfWeight < FW_BOLD)
+    {
+	size_t orig_len = wcslen(lf->lfFaceName);
+	if (orig_len > 8 && !STRCMP(lf->lfFaceName + orig_len - 7, L" Medium"))
+	{
+	    lf->lfFaceName[orig_len - 7] = NUL;
+	}
+	lf->lfWeight = FW_BOLD;
+    }
+    else if (lf->lfWeight < FW_HEAVY)
+    {
+	wcscat(lf->lfFaceName, L" Heavy");
+	lf->lfWeight = FW_HEAVY;
+    }
+}
+
 /*
  * Handler of gui.wide_font (p_guifontwide) changed notification.
  */
@@ -3787,9 +3808,9 @@ gui_mch_wide_font_changed(void)
 	    gui.wide_ital_font = get_font_handle(&lf);
 	    lf.lfItalic = FALSE;
 	}
-	if (lf.lfWeight < FW_BOLD)
+	if (lf.lfWeight < FW_HEAVY)
 	{
-	    lf.lfWeight = FW_BOLD;
+	    find_bold_font(&lf);
 	    gui.wide_bold_font = get_font_handle(&lf);
 	    if (!lf.lfItalic)
 	    {
@@ -3862,9 +3883,9 @@ gui_mch_init_font(char_u *font_name, int fontset UNUSED)
 	gui.ital_font = get_font_handle(&lf);
 	lf.lfItalic = FALSE;
     }
-    if (lf.lfWeight < FW_BOLD)
+    if (lf.lfWeight < FW_HEAVY)
     {
-	lf.lfWeight = FW_BOLD;
+	find_bold_font(&lf);
 	gui.bold_font = get_font_handle(&lf);
 	if (!lf.lfItalic)
 	{

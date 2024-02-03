@@ -2764,6 +2764,25 @@ static const LOGFONTW s_lfDefault =
 // The value will be based on the system DPI.
 int current_font_height = 0;		// also used in gui_w32.c
 
+    static int
+str_to_pixels(WCHAR *str, WCHAR **end)
+{
+    int pixels = 0;
+
+    while (*str != NUL)
+    {
+	if (!VIM_ISDIGIT(*str))
+	    break;
+
+	pixels *= 10;
+	pixels += *str - L'0';
+	++str;
+    }
+
+    *end = str;
+    return pixels;
+}
+
 /*
  * Convert a string representing a point size into pixels. The string should
  * be a positive decimal number, with an optional decimal point (eg, "12", or
@@ -3163,11 +3182,17 @@ get_logfont(
 	    case L'h':
 		lf->lfHeight = - points_to_pixels(p, &p, TRUE, (long_i)printer_dc);
 		break;
+	    case L'x':
+		lf->lfHeight = - str_to_pixels(p, &p);
+		break;
 	    case L'w':
 		lf->lfWidth = points_to_pixels(p, &p, FALSE, (long_i)printer_dc);
 		break;
 	    case L'W':
 		lf->lfWeight = wcstol(p, &p, 10);
+		break;
+	    case L'm':
+		lf->lfWeight = FW_MEDIUM;
 		break;
 	    case L'b':
 		lf->lfWeight = FW_BOLD;
@@ -3226,7 +3251,7 @@ get_logfont(
 		}
 	    default:
 		if (verbose)
-		    semsg(_(e_illegal_char_nr_in_font_name_str), p[-1], name);
+		    semsg(_(e_illegal_char_nr_in_font_name_str), p, name);
 		goto theend;
 	}
 	while (*p == L':')
