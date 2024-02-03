@@ -448,6 +448,8 @@ do_in_path(
     char_u	**files;
     int		i;
     int		did_one = FALSE;
+    size_t      buf_len;
+    int         is_vimfiles_after; // script is located in vimfiles/after directory
 #ifdef AMIGA
     struct Process	*proc = (struct Process *)FindTask(0L);
     APTR		save_winptr = proc->pr_WindowPtr;
@@ -476,7 +478,7 @@ do_in_path(
 
 	// Loop over all entries in 'runtimepath'.
 	rtp = rtp_copy;
-	while (*rtp != NUL && ((flags & DIP_ALL) || !did_one))
+	while (*rtp != NUL)
 	{
 	    size_t buflen;
 
@@ -505,7 +507,19 @@ do_in_path(
 	    {
 		add_pathsep(buf);
 		STRCAT(buf, prefix);
-		tail = buf + STRLEN(buf);
+		buf_len = STRLEN(buf);
+		// buf is a directory in runtimepath
+		is_vimfiles_after = (flags & DIP_ALL) || (
+			buf_len >= 16 &&
+			vim_ispathsep(buf[buf_len - 7]) &&
+			vim_ispathsep(buf[buf_len - 16]) &&
+			strncmp(buf + (buf_len - 15), "vimfiles", 8) == 0 &&
+			strncmp(buf + (buf_len - 6), "after", 5) == 0
+		    ); // check buf endswith /vimfiles/after/
+		// always source all vimfiles/after so that we can override plugin settings
+		if (!(flags & DIP_ALL) && !is_vimfiles_after && did_one)
+		    continue;
+		tail = buf + buf_len;
 
 		// Loop over all patterns in "name"
 		np = name;

@@ -4757,8 +4757,12 @@ syn_cmd_include(exarg_T *eap, int syncing UNUSED)
     current_syn_inc_tag = ++running_syn_inc_tag;
     prev_toplvl_grp = curwin->w_s->b_syn_topgrp;
     curwin->w_s->b_syn_topgrp = sgl_id;
+    // syn include should not use DIP_ALL (source all) flags since it might cause the user file to be overriden by the default file
+    // e.g. syn include javascript.vim
+    // load .vim/syntax/javascript.vim
+    // then load vimruntime/syntax/javascript.vim
     if (source ? do_source(eap->arg, FALSE, DOSO_NONE, NULL) == FAIL
-				: source_runtime(eap->arg, DIP_ALL) == FAIL)
+				: source_runtime(eap->arg, 0) == FAIL)
 	semsg(_(e_cant_open_file_str), eap->arg);
     curwin->w_s->b_syn_topgrp = prev_toplvl_grp;
     current_syn_inc_tag = prev_syn_inc_tag;
