@@ -13,6 +13,8 @@
 
 #include "vim.h"
 #include "version.h"
+#include <windows.h>
+#include <shlwapi.h>
 
 #if defined(__HAIKU__)
 # include <storage/FindDirectory.h>
@@ -1199,9 +1201,24 @@ vim_beep(unsigned val)
 init_homedir(void)
 {
     char_u  *var;
+    char_u buffer[256];
 
     // In case we are called a second time (when 'encoding' changes).
     VIM_CLEAR(homedir);
+
+    var = mch_getenv((char_u *)"VIM_HOME");
+    if (var == NULL) {
+        // Get executable path
+        GetModuleFileName(NULL, buffer, sizeof buffer);
+        // Remove exe filename from path
+        PathRemoveFileSpec(buffer);
+	// Resolve home relative to executable path
+        PathAppend(buffer, "home");
+        var = buffer;
+    }
+    homedir = vim_strsave(var);
+    vim_setenv("HOME", homedir);
+    return;
 
 #ifdef VMS
     var = mch_getenv((char_u *)"SYS$LOGIN");
