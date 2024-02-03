@@ -1089,6 +1089,12 @@ pum_clear(void)
     pum_first = 0;
 }
 
+    int
+pum_is_selected()
+{
+    return pum_selected != -1;
+}
+
 /*
  * Return TRUE if the popup menu is displayed. Used to avoid some redrawing
  * that could overwrite it.  Overruled when "pum_pretend_not_visible" is set,

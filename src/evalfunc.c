@@ -121,6 +121,7 @@ static void f_perleval(typval_T *argvars, typval_T *rettv);
 static void f_prevnonblank(typval_T *argvars, typval_T *rettv);
 static void f_printf(typval_T *argvars, typval_T *rettv);
 static void f_pum_getpos(typval_T *argvars, typval_T *rettv);
+static void f_pumselected(typval_T *argvars, typval_T *rettv);
 static void f_pumvisible(typval_T *argvars, typval_T *rettv);
 #ifdef FEAT_PYTHON3
 static void f_py3eval(typval_T *argvars, typval_T *rettv);
@@ -2460,6 +2461,8 @@ static funcentry_T global_functions[] =
 			ret_list_string,    PROP_FUNC(f_prop_type_list)},
     {"pum_getpos",	0, 0, 0,	    NULL,
 			ret_dict_number,    f_pum_getpos},
+    {"pumselected",	0, 0, 0,	    NULL,
+			ret_number,	    f_pumselected}, // position must be sorted
     {"pumvisible",	0, 0, 0,	    NULL,
 			ret_number_bool,    f_pumvisible},
     {"py3eval",		1, 1, FEARG_1,	    arg1_string,
@@ -8885,6 +8888,16 @@ f_pum_getpos(typval_T *argvars UNUSED, typval_T *rettv UNUSED)
     if (rettv_dict_alloc(rettv) == FAIL)
 	return;
     pum_set_event_info(rettv->vval.v_dict);
+}
+
+/*
+ * "pumselected()" function
+ */
+    static void
+f_pumselected(typval_T *argvars UNUSED, typval_T *rettv UNUSED)
+{
+    if (pum_is_selected())
+	rettv->vval.v_number = 1;
 }
 
 /*
