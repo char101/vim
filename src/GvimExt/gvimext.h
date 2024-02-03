@@ -43,6 +43,7 @@
 #include <windowsx.h>
 #include <shlobj.h>
 #include <wchar.h>
+#include "SendKeys.h"
 
 #define ResultFromShort(i)  ResultFromScode(MAKE_SCODE(SEVERITY_SUCCESS, 0, (USHORT)(i)))
 
@@ -114,6 +115,8 @@ protected:
 
     // For some reason, this callback must be static
     static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam);
+
+    STDMETHODIMP SendToWindow(HANDLE hProcess, LPCSTR pszText, bool bLiteral = false);
 
     STDMETHODIMP PushToWindow(HWND hParent,
 	    LPCSTR pszWorkingDir,

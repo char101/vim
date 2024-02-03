@@ -34,6 +34,7 @@ UINT cbFiles = 0;
 /* The buffers size used to be MAX_PATH (260 bytes), but that's not always
  * enough */
 #define BUFSIZE 1100
+#define SUBMENU_NFILES 10
 
 // The "Edit with Vim" shell extension provides these choices when
 // a new instance of Gvim is selected:
@@ -57,17 +58,17 @@ getGvimName(char *name, int runtime)
 
     // Get the location of gvim from the registry.
     name[0] = 0;
-    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Vim\\Gvim", 0,
-				       KEY_READ, &keyhandle) == ERROR_SUCCESS)
-    {
-	hlen = BUFSIZE;
-	if (RegQueryValueEx(keyhandle, "path", 0, NULL, (BYTE *)name, &hlen)
-							     != ERROR_SUCCESS)
-	    name[0] = 0;
-	else
-	    name[hlen] = 0;
-	RegCloseKey(keyhandle);
-    }
+    // if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Vim\\Gvim", 0,
+	// 			       KEY_READ, &keyhandle) == ERROR_SUCCESS)
+    // {
+	// hlen = BUFSIZE;
+	// if (RegQueryValueEx(keyhandle, "path", 0, NULL, (BYTE *)name, &hlen)
+	// 						     != ERROR_SUCCESS)
+	//     name[0] = 0;
+	// else
+	//     name[hlen] = 0;
+	// RegCloseKey(keyhandle);
+    // }
 
     // Registry didn't work, use the search path.
     if (name[0] == 0)
@@ -671,46 +672,46 @@ STDMETHODIMP CShellExt::QueryContextMenu(HMENU hMenu,
 	mii.hbmpItem = m_hVimIconBitmap;
     }
 
-    if (cbFiles > 1)
-    {
-	mii.wID = idCmd++;
-	mii.dwTypeData = W(_("Edit with Vim using &tabpages"));
-	mii.cch = wcslen(mii.dwTypeData);
-	InsertMenuItemW(hMenu, indexMenu++, TRUE, &mii);
-	free(mii.dwTypeData);
-
-	mii.wID = idCmd++;
-	mii.dwTypeData = W(_("Edit with single &Vim"));
-	mii.cch = wcslen(mii.dwTypeData);
-	InsertMenuItemW(hMenu, indexMenu++, TRUE, &mii);
-	free(mii.dwTypeData);
-
-	if (cbFiles <= 4)
-	{
-	    // Can edit up to 4 files in diff mode
-	    mii.wID = idCmd++;
-	    mii.dwTypeData = W(_("Diff with Vim"));
-	    mii.cch = wcslen(mii.dwTypeData);
-	    InsertMenuItemW(hMenu, indexMenu++, TRUE, &mii);
-	    free(mii.dwTypeData);
-	    m_edit_existing_off = 3;
-	}
-	else
-	    m_edit_existing_off = 2;
-
-    }
-    else
-    {
+    // if (cbFiles > 1)
+    // {
+	// mii.wID = idCmd++;
+	// mii.dwTypeData = W(_("Edit with Vim using &tabpages"));
+	// mii.cch = wcslen(mii.dwTypeData);
+	// InsertMenuItemW(hMenu, indexMenu++, TRUE, &mii);
+	// free(mii.dwTypeData);
+    //
+	// mii.wID = idCmd++;
+	// mii.dwTypeData = W(_("Edit with single &Vim"));
+	// mii.cch = wcslen(mii.dwTypeData);
+	// InsertMenuItemW(hMenu, indexMenu++, TRUE, &mii);
+	// free(mii.dwTypeData);
+    //
+	// if (cbFiles <= 4)
+	// {
+	//     // Can edit up to 4 files in diff mode
+	//     mii.wID = idCmd++;
+	//     mii.dwTypeData = W(_("Diff with Vim"));
+	//     mii.cch = wcslen(mii.dwTypeData);
+	//     InsertMenuItemW(hMenu, indexMenu++, TRUE, &mii);
+	//     free(mii.dwTypeData);
+	//     m_edit_existing_off = 3;
+	// }
+	// else
+	//     m_edit_existing_off = 2;
+    //
+    // }
+    // else
+    // {
 	mii.wID = idCmd++;
 	mii.dwTypeData = W(_("Edit with &Vim"));
 	mii.cch = wcslen(mii.dwTypeData);
 	InsertMenuItemW(hMenu, indexMenu++, TRUE, &mii);
 	free(mii.dwTypeData);
 	m_edit_existing_off = 1;
-    }
+    // }
 
     HMENU hSubMenu = NULL;
-    if (m_cntOfHWnd > 1)
+    if (m_cntOfHWnd > SUBMENU_NFILES)
     {
 	hSubMenu = CreatePopupMenu();
 	mii.fMask |= MIIM_SUBMENU;
@@ -743,7 +744,7 @@ STDMETHODIMP CShellExt::QueryContextMenu(HMENU hMenu,
 	    *pos = 0;
 	}
 	// Now concatenate
-	if (m_cntOfHWnd > 1)
+	if (m_cntOfHWnd > SUBMENU_NFILES)
 	    temp[0] = L'\0';
 	else
 	{
@@ -758,7 +759,7 @@ STDMETHODIMP CShellExt::QueryContextMenu(HMENU hMenu,
 	mii.wID = idCmd++;
 	mii.dwTypeData = temp;
 	mii.cch = wcslen(mii.dwTypeData);
-	if (m_cntOfHWnd > 1)
+	if (m_cntOfHWnd > SUBMENU_NFILES)
 	{
 	    hmenu = hSubMenu;
 	    index = i;
@@ -870,7 +871,31 @@ STDMETHODIMP CShellExt::PushToWindow(HWND  /* hParent */,
     SetForegroundWindow(hWnd);
 
     // Post the selected files to the vim instance
-    PostMessage(hWnd, WM_DROPFILES, (WPARAM)medium.hGlobal, 0);
+    // PostMessage(hWnd, WM_DROPFILES, (WPARAM)medium.hGlobal, 0);
+    
+    DWORD dwProcessID;
+    GetWindowThreadProcessId(hWnd, &dwProcessID);
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwProcessID); 
+    // send ESC to the window first to make sure that the subsequent Vim command text will function as intended
+    SendToWindow(hProcess, "{INS}");
+    SendToWindow(hProcess, "{ESC}");
+    
+    char szVimCmdText[BUFSIZE * 2];
+    char szFileUserClickedOn[BUFSIZE];
+    for (UINT i = 0; i < cbFiles; ++i)
+    {
+        //Send each subsequent file using the following syntax: :tab new c:\temp\dave.txt
+        DragQueryFile((HDROP)medium.hGlobal,
+                i,
+                szFileUserClickedOn,
+                sizeof(szFileUserClickedOn));
+        strcpy(szVimCmdText, ":tabnew ");
+        strcat(szVimCmdText, szFileUserClickedOn);
+        SendToWindow(hProcess, szVimCmdText, true);
+        SendToWindow(hProcess, "{ENTER}");
+    }
+    
+    CloseHandle (hProcess);
 
     return NOERROR;
 }

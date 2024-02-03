@@ -48,8 +48,8 @@ CPU = i386
 cc = cl
 link = link
 rc = rc
-cflags = -nologo -c
-lflags = -incremental:no -nologo
+cflags = -nologo -c -O2 -GL
+lflags = -incremental:no -nologo -ltcg -opt:ref -opt:icf
 rcflags = /r
 olelibsdll = ole32.lib uuid.lib oleaut32.lib user32.lib gdi32.lib advapi32.lib
 !endif
@@ -78,14 +78,17 @@ OFFSET = 0x1C000000
 all: gvimext.dll
 
 gvimext.dll:    gvimext.obj	\
-		gvimext.res
+		gvimext.res \
+		SendKeys.obj
 	$(link) $(lflags) -dll -def:gvimext.def -base:$(OFFSET) -out:$*.dll $** $(olelibsdll) shell32.lib comctl32.lib -subsystem:$(SUBSYSTEM)
 	if exist $*.dll.manifest mt -nologo -manifest $*.dll.manifest -outputresource:$*.dll;2
 
 gvimext.obj: gvimext.h
 
+SendKeys.obj: SendKeys.h
+
 .cpp.obj:
-	$(cc) $(cflags) -DFEAT_GETTEXT $(cvarsmt) $*.cpp
+	$(cc) $(cflags) $(cvarsmt) $*.cpp
 
 gvimext.res: gvimext.rc
 	$(rc) /nologo $(rcflags) $(rcvars)  gvimext.rc
@@ -97,3 +100,4 @@ clean:
 	- if exist gvimext.obj del gvimext.obj
 	- if exist gvimext.res del gvimext.res
 	- if exist gvimext.dll.manifest del gvimext.dll.manifest
+	- if exist SendKeys.obj del SendKeys.obj
