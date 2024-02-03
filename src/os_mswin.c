@@ -42,6 +42,8 @@
 #  include <commdlg.h>
 # endif
 
+#include <Shobjidl.h>
+
 #endif // PROTO
 
 #ifdef __MINGW32__
@@ -244,6 +246,8 @@ mch_early_init(void)
 	toupper_tab[i] = tolower_tab[i] = i;
     CharUpperBuff((LPSTR)toupper_tab, 256);
     CharLowerBuff((LPSTR)tolower_tab, 256);
+
+    SetCurrentProcessExplicitAppUserModelID(L"GVim.app");
 }
 
 
