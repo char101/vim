@@ -1658,7 +1658,7 @@ luaV_window_newindex(lua_State *L)
 {
     win_T *w = (win_T *) luaV_checkvalid(L, luaV_Window, 1);
     const char *s = luaL_checkstring(L, 2);
-    int v = luaL_checkinteger(L, 3);
+    int v = (int)luaL_checkinteger(L, 3);
     if (strncmp(s, "line", 4) == 0)
     {
 #ifdef HAVE_SANDBOX
@@ -2147,7 +2147,7 @@ luaV_window(lua_State *L)
     win_T *win;
     if (lua_isnumber(L, 1)) // get by number?
     {
-	int n = lua_tointeger(L, 1);
+	lua_Integer n = lua_tointeger(L, 1);
 	for (win = firstwin; win != NULL; win = win->w_next, n--)
 	    if (n == 1) break;
     }
